@@ -5,8 +5,6 @@
       <ul>
         <li><router-link to="/create">Create new game</router-link></li>
         <li><router-link to="/join">Join game</router-link></li>
-        <li><router-link to="/meldTest">Meld test</router-link></li>
-        <li><router-link to="/knockTest">Knock test</router-link></li>
       </ul>
     </nav>
     <router-view></router-view>

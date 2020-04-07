@@ -13,7 +13,8 @@ def loadScript(script, client):
     scriptContents = file.read(1000000) #no scripts > 1MB
     return client.register_script(scriptContents)
 
-r = redis.Redis()
+redis_url = os.getenv('REDISTOGO_URL', 'redis://localhost:6379')
+r = redis.from_url(redis_url)
 
 def gameKey(gameID):
     return f"game:{gameID}"
