@@ -8,7 +8,7 @@ import io from 'socket.io-client'
 import store from './store'
 import router from './routes'
 
-const socket = io(`${window.location.hostname}:5000`);
+const socket = io(`${window.location.hostname}:${process.env.VUE_APP_SOCKETIO_PORT}`);
 Vue.use(VueSocketIOExt, socket, {store});
 
 Vue.config.productionTip = false
