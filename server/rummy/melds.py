@@ -1,4 +1,4 @@
-from .card import *
+from .card import rank, suit, ranks
 from collections import defaultdict
 
 def isRun(meld):

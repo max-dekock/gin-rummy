@@ -1,11 +1,11 @@
-from flask import Flask, request
+from flask import Flask, request, render_template
 from flask_socketio import SocketIO, send, emit, join_room
 
 import os
 import traceback
 
 def create_app(test_config=None):
-    app = Flask(__name__.split(".")[0], instance_relative_config=True)
+    app = Flask(__name__.split(".")[0])
     app.config.from_mapping(
         SECRET_KEY="dev",
         REDIS_DB=("127.0.0.1", 6379, 0) # (host, port, db)
@@ -17,11 +17,5 @@ def create_app(test_config=None):
     else:
         # Load the test config if passed in
         app.config.from_mapping(test_config)
-    
-    # Create the instance folder if necessary
-    try:
-        os.makedirs(app.instance_path)
-    except OSError:
-        pass
 
     return app
