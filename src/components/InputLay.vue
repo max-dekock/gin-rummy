@@ -1,8 +1,9 @@
 <template>
-    <div>
+    <div class="input-lay">
         <div
             v-for="(meld, index) in melds"
             :key="index"
+            class="input-lay__meld-wrapper"
         >
             <card-sequence :cards="meld"></card-sequence>
             <button @click="removeMeld(index)">Remove</button>
@@ -66,3 +67,11 @@ export default {
     }
 }
 </script>
+
+<style scoped>
+.input-lay__meld-wrapper {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+</style>

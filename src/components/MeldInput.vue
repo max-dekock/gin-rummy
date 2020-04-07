@@ -1,21 +1,22 @@
 <template>
-    <div class="meldInput">
+    <div class="meld-input">
         <div v-for="mkey in mkeys"
-            class="meld"
+            class="meld-input__meld-wrapper"
             :key="mkey"
         >
             <button class="removeMeldButton" @click="removeMeld(mkey)">Remove</button>
-            <Hand :cards="meld(mkey)"></Hand>
+            <card-sequence :cards="meld(mkey)"></card-sequence>
         </div>
     </div>
 </template>
 
 <script>
-import Hand from './Hand.vue'
+import CardSequence from './CardSequence.vue'
 
 export default {
+    name: 'meld-input',
     components: {
-        Hand,
+        CardSequence,
     },
     model: {
         prop: 'melds',
@@ -44,3 +45,11 @@ export default {
     }
 }
 </script>
+
+<style scoped>
+.meld-input__meld-wrapper {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+</style>

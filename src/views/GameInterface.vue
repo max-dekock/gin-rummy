@@ -2,11 +2,12 @@
     <div class="game-wrapper">
         <card-sequence
             class="opponent-hand"
-            v-if="!opponentMelds"
+            v-if="!gameFinished && !(turn && phase == 'lay')"
             :cards="opponentHand"
             :options="{faceDown: true}"
         ></card-sequence>
         <div v-else class="opponent-melds">
+            <h4 v-if="opponentMelds.length > 0">Melds:</h4>
             <div
                 v-for="(meld, meldIndex) in opponentMelds"
                 :key="meldIndex"
@@ -24,8 +25,15 @@
                 <card-sequence 
                     v-if="layoffs[meldIndex]"
                     :cards="layoffs[meldIndex]"
+                    class="opponent-melds__layoff"
                 ></card-sequence>
             </div>
+            <h4 v-if="opponentDeadwood.length > 0">Deadwood:</h4>
+            <card-sequence
+                v-if="opponentDeadwood.length > 0"
+                :cards="opponentDeadwood"
+                class="opponent-melds__deadwood"
+            ></card-sequence>
         </div>
         <h3 class="opponent-name">{{ opponent }}</h3>
 
@@ -38,17 +46,27 @@
             <p>Discard pile</p>
         </div>
 
-        <h2 class="game-score" v-if="gameFinished">{{score}}</h2>
+        <div class="game-score" v-if="gameFinished">
+            <h3>Score:</h3>
+            <h2>{{nickname}}: {{score.you}} | {{opponent}}: {{score.opponent}}</h2>
+        </div>
         <p class="game-wait" v-else-if="uiMode == 'wait'">{{ opponent }}'s turn</p>
         <component v-else class="game-controls" :is="controlsComponent"></component>
 
-        <player-hand v-if="!playerMelds"></player-hand>
+        <player-hand v-if="!gameFinished && !(!turn && phase == 'lay')"></player-hand>
         <div v-else class="player-melds">
+            <h4 v-if="playerMelds.length > 0">Melds:</h4>
             <card-sequence
                 v-for="mkey in playerMelds.keys()"
                 :key="mkey"
                 :cards="playerMelds[mkey]"
                 class="player-melds__meld"
+            ></card-sequence>
+            <h4 v-if="playerDeadwood.length > 0">Deadwood:</h4>
+            <card-sequence
+                v-if="playerDeadwood.length > 0"
+                :cards="playerDeadwood"
+                class="player-melds__deadwood"
             ></card-sequence>
         </div>
         <h3 class="player-name">{{ nickname }}</h3>
@@ -128,14 +146,28 @@ export default {
             if ('result' in this.gameData && 'melds' in this.gameData.result) {
                 return this.gameData.result.melds.you;
             } else {
-                return undefined;
+                return [];
+            }
+        },
+        playerDeadwood() {
+            if ('result' in this.gameData && 'deadwood' in this.gameData.result) {
+                return this.gameData.result.deadwood.you;
+            } else {
+                return [];
             }
         },
         opponentMelds() {
             if ('result' in this.gameData && 'melds' in this.gameData.result) {
                 return this.gameData.result.melds.opponent;
             } else {
-                return undefined;
+                return [];
+            }
+        },
+        opponentDeadwood() {
+            if ('result' in this.gameData && 'deadwood' in this.gameData.result) {
+                return this.gameData.result.deadwood.opponent;
+            } else {
+                return [];
             }
         },
         opponentHand() {
