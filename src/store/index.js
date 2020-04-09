@@ -82,6 +82,20 @@ export default new Vuex.Store({
         }
       }
       return true;
+    },
+    melds({gameData}) {
+      if ('result' in gameData && 'melds' in gameData.result) {
+        return gameData.result.melds;
+      } else {
+        return {};
+      }
+    },
+    layoffs({gameData}) {
+      if ('result' in gameData && 'layoffs' in gameData.result) {
+        return gameData.result.layoffs;
+      } else {
+        return {};
+      }
     }
   },
   mutations: {
@@ -158,7 +172,7 @@ export default new Vuex.Store({
     lay({state}) {
       let layoffs = [];
       for (let i in state.ui.layoffs) {
-        layoffs.push([state.gameData.result.melds.opponent[i], state.ui.layoffs[i]]);
+        layoffs.push([i, state.ui.layoffs[i]]);
       }
       this._vm.$socket.client.emit('lay', {
         gameID: state.gameID,

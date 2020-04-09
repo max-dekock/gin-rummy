@@ -36,6 +36,15 @@ def onJoinGame(payload):
         op.startGame(gameID, playerID)
     updateGame(gameID)
 
+@socketio.on('rejoinGame')
+def onRejoinGame(payload):
+    gameID = payload['gameID']
+    playerID = payload['playerID']
+    join_room(f'game:{gameID}')
+    join_room(f'player:{playerID}')
+    emit('rejoinGame', {'message': 'OK', 'gameID': gameID, 'playerID': playerID})
+    updateGame(gameID)
+
 @socketio.on('draw')
 def onDraw(payload):
     gameID = payload['gameID']
@@ -115,9 +124,11 @@ def scoreResult(result):
 @socketio.on_error()
 def onError(e):
     traceback.print_exc()
-    print(request.event["message"])
+    message = request.event["message"]
+    print(message)
     print(request.event["args"])
-    emit('error', {"error": str(e)})
+    if message != 'update':
+        emit('error', {"error": str(e)})
 
 if __name__ == '__main__':
     from . import create_app

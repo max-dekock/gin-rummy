@@ -1,5 +1,5 @@
 <template>
-    <div class="knock">
+    <div class="input-knock">
         <div>
             <MeldInput v-model="melds"></MeldInput>
             <Card v-if="discard" :card="discard"></Card>

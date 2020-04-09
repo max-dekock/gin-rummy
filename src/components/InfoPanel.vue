@@ -18,7 +18,7 @@
     </tr>
     <tr>
       <td>Emit</td>
-      <td><a href="javascript:void(0)" @click="emitUpdate">update</a></td>
+      <td><a href="javascript:void(0)" @click="emitUpdate">update</a> <a href="javascript:void(0)" @click="emitRejoin">rejoin</a></td>
     </tr>
   </table>
 </template>
@@ -34,6 +34,10 @@ export default {
     emitUpdate() {
       console.log('Emitting update');
       this.$socket.client.emit('update', {gameID: this.gameID});
+    },
+    emitRejoin() {
+      console.log('Emitting rejoinGame');
+      this.$socket.client.emit('rejoinGame', {gameID: this.gameID, playerID: this.playerID});
     }
   }
 };

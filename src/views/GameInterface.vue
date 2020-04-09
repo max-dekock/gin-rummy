@@ -56,12 +56,21 @@
         <player-hand v-if="!gameFinished && !(!turn && phase == 'lay')"></player-hand>
         <div v-else class="player-melds">
             <h4 v-if="playerMelds.length > 0">Melds:</h4>
-            <card-sequence
-                v-for="mkey in playerMelds.keys()"
-                :key="mkey"
-                :cards="playerMelds[mkey]"
-                class="player-melds__meld"
-            ></card-sequence>
+            <div
+                v-for="(meld, index) in playerMelds"
+                :key="index"
+                class="player-melds__wrapper"
+            >
+                <card-sequence
+                    :cards="meld"
+                    class="player-melds__meld"
+                ></card-sequence>
+                <card-sequence
+                    v-if="opponentLayoffsOf(index)"
+                    :cards="opponentLayoffsOf(index)"
+                ></card-sequence>
+            </div>
+            <!-- TODO: add player meld -->
             <h4 v-if="playerDeadwood.length > 0">Deadwood:</h4>
             <card-sequence
                 v-if="playerDeadwood.length > 0"
@@ -107,7 +116,7 @@ export default {
             phase: state => state.gameData.phase,
             hand: state => state.gameData.hand,
             topDiscard: state => state.gameData.topDiscard,
-            score: state => state.gameData.score
+            score: state => state.gameData.score,
         }),
         ...mapGetters([
             'uiMode', 'gameFinished'
@@ -181,6 +190,13 @@ export default {
                 return a;
             }
         },
+        opponentLayoffs() {
+            if ('opponent' in this.$store.getters.layoffs) {
+                return this.$store.getters.layoffs.opponent
+            } else {
+                return [];
+            }
+        },
         layoffsPermitted() {
             return (this.uiMode == 'lay' && !this.gameData.result.gin);
         }        
@@ -198,6 +214,20 @@ export default {
             let lo = this.layoffs[meldIndex] ? this.layoffs[meldIndex] : [];
             return isMeld(meld.concat(lo, this.selectedCards));
         },
+        opponentLayoffsOf(meldIndex) {
+            let lo = [];
+            for (let ll of this.opponentLayoffs) {
+                if (ll[0] == meldIndex) {
+                    lo.push(...ll[1]);
+                }
+            }
+            if (lo.length > 0) {
+                return lo;
+            } else {
+                return null;
+            }
+            
+        }
     }
 }
 </script>
@@ -215,7 +245,7 @@ export default {
     margin: auto;
 
 }
-.opponent-melds__wrapper {
+.player-melds__wrapper,.opponent-melds__wrapper {
     display: flex;
     flex-wrap: wrap;
 }

@@ -32,6 +32,12 @@ end
 local hand = data.cards.hands[ARGV[2]]
 local melds = cjson.decode(ARGV[3])
 local layoffs = cjson.decode(ARGV[4])
+if melds == nil then
+    melds = {}
+end
+if layoffs == nil then
+    layoffs = {}
+end
 local opponent = data.players[ARGV[2]].opponent
 local opponentMelds = data.result.melds[opponent]
 if layoffs ~= nil and data.gin == true then
@@ -49,41 +55,8 @@ for i,m in ipairs(melds) do
         rem[c] = false
     end
 end
-for i,mlo in ipairs(layoffs) do
-    local m = mlo[1]
+for _,mlo in pairs(layoffs) do
     local lo = mlo[2]
-    local valid = false
-    for i,om in ipairs(opponentMelds) do
-        local cc = {}
-        for i,c in ipairs(om) do
-            cc[c] = true
-        end
-        local invalid = false
-        for i,c in ipairs(m) do
-            if cc[c] then
-                cc[c] = false
-            else
-                invalid = true
-                break
-            end
-        end
-        if not invalid then
-            for k,v in pairs(cc) do
-                if v then
-                    invalid = true
-                    break
-                end
-            end
-            if not invalid then
-                valid = true
-                break
-            end
-        end
-
-    end
-    if not valid then
-        return redis.error_reply("Cannot lay: opponent has no such meld")
-    end
     for i,c in ipairs(lo) do
         if not rem[c] then
             return redis.error_reply("Cannot lay: card not in hand or duplicated")
@@ -96,6 +69,13 @@ for k,v in pairs(rem) do
     if v then
         table.insert(deadwood, k)
     end
+end
+
+if #melds == 0 then
+    melds = nil
+end
+if #layoffs == 0 then
+    layoffs = nil
 end
 
 data.result.melds[ARGV[2]] = melds

@@ -1,6 +1,6 @@
 {
   "name": "gin-rummy",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "engines": {
     "node": "12.16.x"
   },
@@ -9,7 +9,7 @@
     "serve": "vue-cli-service serve",
     "build": "vue-cli-service build",
     "lint": "vue-cli-service lint",
-    "start": "python -m server"
+    "flask-server": "python -m server"
   },
   "dependencies": {
     "core-js": "^3.6.4",

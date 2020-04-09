@@ -6,15 +6,14 @@ import base64
 from ..rummy import card
 from ..rummy.melds import isMeld
 
+from . import redis_client as r
+
 scriptDir = os.path.dirname(__file__)
 
 def loadScript(script, client):
     file = open(os.path.join(scriptDir, script))
     scriptContents = file.read(1000000) #no scripts > 1MB
     return client.register_script(scriptContents)
-
-redis_url = os.getenv('REDISTOGO_URL', 'redis://localhost:6379')
-r = redis.from_url(redis_url)
 
 def gameKey(gameID):
     return f"game:{gameID}"
@@ -111,8 +110,14 @@ def lay(gameID, playerID, melds, layoffs):
     for meld in melds:
         if not isMeld(meld):
             raise ValueError("Invalid meld")
+    raw = r.get(gameKey(gameID))
+    if raw is None:
+        raise ValueError('invalid gameID')
+    gameData = json.loads(raw)
+    opponent = gameData['players'][playerID]['opponent']
+    opponentMelds = gameData['result']['melds'][opponent]
     for (m, lo) in layoffs:
-        if not isMeld(m + lo):
+        if not isMeld(opponentMelds[int(m)] + lo):
             raise ValueError("Invalid layoff")
     return layScript(keys = [gameKey(gameID)], args = [
         gameID,
@@ -124,24 +129,6 @@ def lay(gameID, playerID, melds, layoffs):
 viewsScript = loadScript("views.lua", r)
 def views(gameID):
     return json.loads(viewsScript(keys = [gameKey(gameID)]))
-
-def randomDiscard():
-    import time
-    import random
-    start = time.perf_counter()
-    g, pl = newGame()
-    joinGame(g, pl[0], "Alice")
-    joinGame(g, pl[1], "Bob")
-    startGame(g, pl[0])
-    data = loadGameState(g)
-    while not data["finished"]:
-        pl = data["turn"]
-        pile = random.choice(("stock", "discards"))
-        dr = draw(g, pl, pile)
-        dc = random.choice(data["cards"]["hands"][pl])
-        discard(g, pl, dc)
-        data = loadGameState(g)
-    print((time.perf_counter() - start) * 1000, "ms")
 
 def testKnock():
     g, pl = newGame()
