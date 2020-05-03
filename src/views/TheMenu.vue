@@ -14,20 +14,26 @@
 
 <script>
 export default {
-  created() {
-    this.unwatch = this.$store.watch(
-      state => state.gameState.started,
-      newValue => {
-        if (newValue) {
-          console.log("Game started -- navigating to game view");
-          this.$router.push("/game");
-        }
-      }
-    )
+  computed: {
+    gameID() {
+      return this.$store.state.gameID;
+    },
+    gameStarted() {
+      return this.$store.state.gameState.started;
+    }
   },
-  beforeDestroy() {
-    this.unwatch();
-  }
+  watch: {
+    gameID() {
+      if (this.gameStarted) {
+        this.$router.push('/game');
+      }
+    },
+    gameStarted(newVal) {
+      if (newVal) {
+        this.$router.push('/game');
+      }
+    }
+  },
 }
 </script>
 
