@@ -1,84 +1,124 @@
 <template>
-    <div class="game-wrapper">
-        <card-sequence
-            class="opponent-hand"
-            v-if="!gameFinished && !(turn && phase == 'lay')"
-            :cards="opponentHand"
-            :options="{faceDown: true}"
-        ></card-sequence>
-        <div v-else class="opponent-melds">
-            <h4 v-if="opponentMelds.length > 0">Melds:</h4>
-            <div
-                v-for="(meld, meldIndex) in opponentMelds"
-                :key="meldIndex"
-                class="opponent-melds__wrapper"
-            >
-                <card-sequence
-                    class="opponent-melds__meld"
-                    :cards="meld"
-                ></card-sequence>
-                <button
-                    v-if="layoffsPermitted && !layoffs[meldIndex]"
-                    :disabled="!validLayoffs(meldIndex)"
-                    @click="addLayoffs(meldIndex)"
-                >Lay off</button>
-                <card-sequence 
-                    v-if="layoffs[meldIndex]"
-                    :cards="layoffs[meldIndex]"
-                    class="opponent-melds__layoff"
-                ></card-sequence>
-            </div>
-            <h4 v-if="opponentDeadwood.length > 0">Deadwood:</h4>
+    <div>
+        <div class="header">
+            
+        </div>
+
+        <div class="opponent-box">
+            <h2 class="opponent-name">{{ opponent }}</h2>
             <card-sequence
-                v-if="opponentDeadwood.length > 0"
-                :cards="opponentDeadwood"
-                class="opponent-melds__deadwood"
+                class="opponent-hand"
+                v-if="!melds.opponent"
+                :cards="opponentHand"
+                faceDown
             ></card-sequence>
-        </div>
-        <h3 class="opponent-name">{{ opponent }}</h3>
-
-        <div class="stock-pile">
-            <Card class="pile-card" faceDown></Card>
-            <p>Stock pile</p>
-        </div>
-        <div class="discards-pile">
-            <Card class="pile-card" v-if="topDiscard" :card="topDiscard"></Card>
-            <p>Discard pile</p>
+            <deadwood
+                class="opponent-deadwood"
+                v-else
+                :cards="deadwood.opponent"
+            ></deadwood>
         </div>
 
-        <div class="game-score" v-if="gameFinished">
-            <h3>Score:</h3>
-            <h2>{{nickname}}: {{score.you}} | {{opponent}}: {{score.opponent}}</h2>
-        </div>
-        <p class="game-wait" v-else-if="uiMode == 'wait'">{{ opponent }}'s turn</p>
-        <component v-else class="game-controls" :is="controlsComponent"></component>
+        <div class="board">
+            <meld-sequence
+                class="opponent-melds"
+                v-if="finished && melds.opponent || phase == 'lay' && turn && gin"
+                :melds="melds.opponent"
+                :layoffs="layoffs.you"
+            ></meld-sequence>
+            <layoff-select
+                class="opponent-melds"
+                v-else-if="phase == 'lay' && turn && !gin"
+                :melds="melds.opponent"
+                :selected="selectedCards"
+                v-model="selectedLayoffs"
+            ></layoff-select>
 
-        <player-hand v-if="!gameFinished && !(!turn && phase == 'lay')"></player-hand>
-        <div v-else class="player-melds">
-            <h4 v-if="playerMelds.length > 0">Melds:</h4>
-            <div
-                v-for="(meld, index) in playerMelds"
-                :key="index"
-                class="player-melds__wrapper"
-            >
-                <card-sequence
-                    :cards="meld"
-                    class="player-melds__meld"
-                ></card-sequence>
-                <card-sequence
-                    v-if="opponentLayoffsOf(index)"
-                    :cards="opponentLayoffsOf(index)"
-                ></card-sequence>
+            <div style="display:flex; flex-flow:row wrap; justify-items:space-evenly;">
+                <card-pile
+                    :clickable="mode == 'draw' && !firstTurnDraw"
+                    label="Stock pile"
+                    @pile-clicked="drawStock"
+                >
+                    <card faceDown></card>
+                </card-pile>
+
+                <card-pile
+                    :clickable="mode == 'draw'"
+                    label="Discard pile"
+                    @pile-clicked="drawDiscards"
+                >
+                    <card v-if="topDiscard" :card="topDiscard"></card>
+                    <card v-else faceDown style="opacity:0;"></card>
+                </card-pile>
+
+                <div class="score" v-if="finished">
+                    <h2>Score:</h2>
+                    <h2>{{nickname}}: {{score.you}} | {{opponent}}: {{score.opponent}}</h2>
+                </div>
+
+                <div v-else>
+                    <h3>{{ currentPlayer }}'s turn</h3>
+
+                    <button
+                        v-if="mode == 'draw' && firstTurnDraw"
+                        @click="drawPass"
+                    >Pass</button>
+
+                    <button
+                        v-if="mode == 'discard'"
+                        @click="discard"
+                        :disabled="selectedCards.length != 1"
+                    >Discard</button>
+                    <button
+                        v-if="mode == 'discard'"
+                        @click="toggleKnockMode"
+                    >Knock...</button>
+                </div>
             </div>
-            <!-- TODO: add player meld -->
-            <h4 v-if="playerDeadwood.length > 0">Deadwood:</h4>
-            <card-sequence
-                v-if="playerDeadwood.length > 0"
-                :cards="playerDeadwood"
-                class="player-melds__deadwood"
-            ></card-sequence>
+
+            <meld-sequence
+                class="player-melds"
+                v-if="melds.you"
+                :melds="melds.you"
+                :layoffs="layoffs.opponent ? layoffs.opponent : []"
+            ></meld-sequence>
+            <template v-else-if="['knock', 'lay'].includes(mode)">
+                <meld-select
+                    class="player-melds"
+                    v-model="selectedMelds"
+                    :selected="selectedCards"
+                ></meld-select>
+                <h3>Deadwood: {{ selectedDeadwoodPoints }}</h3>
+                <div>
+                    <button v-if="mode == 'knock'" @click="toggleKnockMode">Cancel</button>
+                    <button :disabled="!validMeldSelected" @click="addMeld">Add meld</button>
+                    <button @click="resetMelds">Reset</button>
+                    <button :disabled="mode == 'knock' && !validKnockSelected" @click="submit">Submit</button>
+                </div>
+            </template>
         </div>
-        <h3 class="player-name">{{ nickname }}</h3>
+
+        <div class="player-box">
+            <h2 class="player-name">{{ nickname }}</h2>
+            <div v-if="!melds.you">
+                <player-hand
+                    :hand="orderedHand"
+                    v-model="selectedCards"
+                    :disabledCards="disabledCards"
+                    :selectMode="handSelectMode"
+                    :selectedColr="handSelectedColor"
+                ></player-hand>
+                <reorder-controls
+                    :arr="hand"
+                    v-model="orderedHand"
+                    :selectedIndices="selectedCards.map(c => orderedHand.indexOf(c))"
+                ></reorder-controls>
+                <button @click="sortHand">Sort</button>
+                <button @click="clearSelection">Clear</button>
+            </div>
+            <deadwood v-else :cards="deadwood.you"></deadwood>
+        </div>
     </div>
 </template>
 
@@ -86,14 +126,16 @@
 import Card from '../components/Card.vue'
 import CardSequence from '../components/CardSequence.vue'
 import PlayerHand from '../components/PlayerHand.vue'
-import InputDraw from '../components/InputDraw.vue'
-import InputDiscard from '../components/InputDiscard.vue'
-import InputKnock from '../components/InputKnock.vue'
-import InputLay from '../components/InputLay.vue'
+import ReorderControls from '../components/ReorderControls.vue'
+import CardPile from '../components/CardPile.vue'
+import MeldSequence from '../components/MeldSequence.vue'
+import MeldSelect from '../components/MeldSelect.vue'
+import LayoffSelect from '../components/LayoffSelect.vue'
+import Deadwood from '../components/Deadwood.vue'
 
-import { mapState, mapGetters } from 'vuex'
+import { mapState, mapGetters, mapActions } from 'vuex'
 
-import { isMeld } from '../rummy_utils.js'
+import { pointValue, deadwoodPoints, compareCards, isMeld } from '../rummy_utils.js'
 
 export default {
     name: 'game-interface',
@@ -101,182 +143,219 @@ export default {
         Card,
         CardSequence,
         PlayerHand,
-        InputDraw,
-        InputDiscard,
-        InputKnock,
-        InputLay
+        ReorderControls,
+        CardPile,
+        MeldSequence,
+        MeldSelect,
+        LayoffSelect,
+        Deadwood
+    },
+    data() {
+        return {
+            orderedHand: [],
+            selectedCards: [],
+            selectedMelds: [],
+            selectedLayoffs: [],
+            knockMode: false,
+        };
     },
     computed: {
-        ...mapState({
-            gameData: 'gameData',
-            error: 'error',
-            nickname: state => state.gameData.nickname,
-            opponent: state => state.gameData.opponent,
-            turn: state => state.gameData.turn,
-            phase: state => state.gameData.phase,
-            hand: state => state.gameData.hand,
-            topDiscard: state => state.gameData.topDiscard,
-            score: state => state.gameData.score,
-        }),
-        ...mapGetters([
-            'uiMode', 'gameFinished'
+        ...mapState('gameState', [
+            'started',
+            'finished',
+            'nickname',
+            'opponent',
+            'turn',
+            'phase',
+            'topDiscard',
+            'hand',
+            'firstTurnDraw',
+            'knocker',
+            'melds',
+            'layoffs',
+            'deadwood',
+            'score',
         ]),
-        selectedCards: {
-            get() {
-                return this.$store.state.ui.selectedCards;
-            },
-            set(value) {
-                this.$store.commit('updateUI', {selectedCards: value});
-            }
-        },
-        layoffs: {
-            get() {
-                return this.$store.state.ui.layoffs;
-            },
-            set(value) {
-                this.$store.commit('updateUI', {layoffs: value});
-            }
-        },
-        controlsComponent() {
-            switch (this.uiMode) {
-                case 'draw':
-                    return 'InputDraw';
-                case 'discard':
-                    return 'InputDiscard';
-                case 'knock':
-                    return 'InputKnock';
-                case 'lay':
-                    return 'InputLay';
-                default:
-                    return undefined;
-            }
-        },
-        playerMelds() {
-            if ('result' in this.gameData && 'melds' in this.gameData.result) {
-                return this.gameData.result.melds.you;
+        ...mapGetters('gameState', [
+            'currentPlayer',
+            'gin',
+            'undercut',
+            'winner',
+        ]),
+        mode() {
+            if (!this.started) {
+                return 'unstarted';
+            } else if (this.finished) {
+                return 'finished';
+            } else if (!this.turn) {
+                return 'wait';
+            } else if (this.phase == 'draw') {
+                return 'draw'
+            } else if (this.phase == 'discard') {
+                return this.knockMode ? 'knock' : 'discard';
+            } else if (this.phase == 'lay') {
+                return 'lay';
             } else {
-                return [];
-            }
-        },
-        playerDeadwood() {
-            if ('result' in this.gameData && 'deadwood' in this.gameData.result) {
-                return this.gameData.result.deadwood.you;
-            } else {
-                return [];
-            }
-        },
-        opponentMelds() {
-            if ('result' in this.gameData && 'melds' in this.gameData.result) {
-                return this.gameData.result.melds.opponent;
-            } else {
-                return [];
-            }
-        },
-        opponentDeadwood() {
-            if ('result' in this.gameData && 'deadwood' in this.gameData.result) {
-                return this.gameData.result.deadwood.opponent;
-            } else {
-                return [];
+                console.warn('Illegal GameInterface mode');
+                return 'illegal';
             }
         },
         opponentHand() {
+            let hand;
             if (this.turn == false && this.phase == 'discard') {
-                let a = new Array(11);
-                a.fill('xx');
-                return a;
+                hand = new Array(11);
             } else {
-                let a = new Array(10);
-                a.fill('xx');
-                return a;
+                hand = new Array(10);
             }
+            hand.fill('??');
+            return hand;
         },
-        opponentLayoffs() {
-            if ('opponent' in this.$store.getters.layoffs) {
-                return this.$store.getters.layoffs.opponent
-            } else {
-                return [];
-            }
-        },
-        layoffsPermitted() {
-            return (this.uiMode == 'lay' && !this.gameData.result.gin);
-        }        
-    },
-    methods: {
-        addLayoffs(meldIndex) {
-            let newLayoffs = [...this.layoffs];
-            newLayoffs[meldIndex] = Array.from(this.selectedCards);
-            this.layoffs = newLayoffs;
-            this.selectedCards = [];
-        },
-        validLayoffs(meldIndex) {
-            if (this.selectedCards.length == 0) { return false; }
-            let meld = this.opponentMelds[meldIndex];
-            let lo = this.layoffs[meldIndex] ? this.layoffs[meldIndex] : [];
-            return isMeld(meld.concat(lo, this.selectedCards));
-        },
-        opponentLayoffsOf(meldIndex) {
-            let lo = [];
-            for (let ll of this.opponentLayoffs) {
-                if (ll[0] == meldIndex) {
-                    lo.push(...ll[1]);
-                }
-            }
-            if (lo.length > 0) {
-                return lo;
-            } else {
+        knockDiscard() {
+            if (this.mode != 'knock') {
                 return null;
             }
-            
+            let deadwood = new Set(this.hand);
+            for (let meld of this.selectedMelds) {
+                meld.forEach(c => deadwood.delete(c));
+            }
+            if (deadwood.size == 0) {
+                return '';
+            } else {
+                let darr = Array.from(deadwood);
+                darr.sort((c1, c2) => pointValue(c2) - pointValue(c1));
+                return darr[0];
+            }
+        },
+        selectedDeadwood() {
+            let deadwood = new Set(this.hand);
+            this.selectedMelds.forEach(
+                meld => meld.forEach(
+                    card => deadwood.delete(card)
+            ));
+            if (this.mode == 'knock') {
+                deadwood.delete(this.knockDiscard);
+            } else if (this.mode == 'lay') {
+                this.selectedLayoffs.forEach(
+                    layoff => layoff.forEach(
+                        card => deadwood.delete(card)
+                ));
+            }
+            return Array.from(deadwood);
+        },
+        selectedDeadwoodPoints() {
+            return deadwoodPoints(this.selectedDeadwood);
+        },
+        validMeldSelected() {
+            return isMeld(this.selectedCards);
+        },
+        validKnockSelected() {
+            return this.selectedDeadwoodPoints <= 10;
+        },
+        disabledCards() {
+            let disabled = [];
+            if (this.mode == 'knock' || this.mode == 'lay') {
+                this.selectedMelds.forEach(
+                    meld => meld.forEach(
+                        card => disabled.push(card)
+                ));
+            }
+            if (this.mode == 'lay') {
+                this.selectedLayoffs.forEach(
+                    layoff => layoff.forEach(
+                        card => disabled.push(card)
+                ));
+            }
+            return disabled;
+        },
+        handSelectMode() {
+            switch (this.mode) {
+                case 'discard':
+                    return 'single';
+                case 'wait':
+                case 'draw':
+                case 'knock':
+                case 'lay':
+                    return 'multi';
+                default:
+                    return 'off';
+            }
+        },
+        handSelectedColor() {
+            if (this.mode == 'knock' || this.mode == 'lay') {
+                return this.validMeldSelected ? 'limegreen' : 'red';
+            } else {
+                return 'yellow';
+            }
         }
+    },
+    methods: {
+        ...mapActions({
+            drawStock: dispatch => dispatch('draw', 'stock'),
+            drawDiscards: dispatch => dispatch('draw', 'discards'),
+            drawPass: dispatch => dispatch('draw', 'refuse'),
+        }),
+        discard() {
+            if (this.selectedCards.length == 1) {
+                this.$store.dispatch('discard', this.selectedCards[0]);
+                this.selectedCards = [];
+            }
+        },
+        knock() {
+            this.$store.dispatch('knock', {
+                melds: this.selectedMelds,
+                discard: this.knockDiscard,
+                deadwood: this.selectedDeadwood,
+            });
+        },
+        lay() {
+            this.$store.dispatch('lay', {
+                melds: this.selectedMelds,
+                layoffs: this.selectedLayoffs,
+            });
+        },
+        clearSelection() {
+            this.selectedCards = [];
+        },
+        sortHand() {
+            this.orderedHand.sort(compareCards);
+        },
+        toggleKnockMode() {
+            this.knockMode = !this.knockMode;
+        },
+        addMeld() {
+            if (!this.validMeldSelected) {
+                console.warn('Tried to add invalid meld');
+                return;
+            }
+            this.selectedMelds.push(Array.from(this.selectedCards).sort(compareCards));
+        },
+        resetMelds() {
+            this.selectedMelds = [];
+        },
+        submit() {
+            if (this.mode == 'knock') {
+                this.knock();
+            } else if (this.mode == 'lay') {
+                this.lay();
+            }
+        },
+
     }
 }
 </script>
 
 <style>
-.game-wrapper {
-    display: grid;
-    grid-template-columns: repeat(5, 1fr);
-    grid-auto-rows: minmax(0px, auto);
-    grid-gap: 10px;
-}
-.opponent-hand,.opponent-melds {
-    grid-row: 2;
-    grid-column: 2 / 6;
-    margin: auto;
-
-}
-.player-melds__wrapper,.opponent-melds__wrapper {
+.player-box,.opponent-box {
     display: flex;
-    flex-wrap: wrap;
+    flex-flow: column nowrap;
+    align-items: center;
+    background-color: #1c1627;
+    padding: 20px;
+    margin: 30px;
+    border: solid 4px #444444;
+    border-radius: 12px;
 }
-.opponent-name {
-    grid-row: 2;
-    grid-column: 1;
-    text-align: right;
-}
-.stock-pile {
-    grid-row: 4;
-    grid-column: 2;
-}
-.discards-pile {
-    grid-row: 4;
-    grid-column: 4;
-}
-.pile-card {
-    margin: auto;
-}
-.game-score,.game-controls,.game-wait {
-    grid-row: 5;
-    grid-column: 1 / 6;
-}
-.player-hand,.player-melds {
-    grid-row: 6;
-    grid-column: 2 / 6;
-    margin: auto;
-}
-.player-name {
-    grid-row: 6;
-    grid-column: 1;
-    text-align: right;
+.player-name,.opponent-name {
+    margin: 0;
 }
 </style>

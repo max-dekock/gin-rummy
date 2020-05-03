@@ -33,7 +33,7 @@
 </template>
 
 <script>
-import CardSequence from './CardSequence2.vue'
+import CardSequence from './CardSequence.vue'
 
 export default {
     name: 'meld-sequence',

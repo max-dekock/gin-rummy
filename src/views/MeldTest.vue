@@ -78,9 +78,9 @@
 import { DECK, isMeld, compareCards, shuffle } from '../rummy_utils.js'
 import MeldSequence from '../components/MeldSequence.vue'
 import Card from '../components/Card.vue'
-import PlayerHand from '../components/PlayerHand2.vue'
+import PlayerHand from '../components/PlayerHand.vue'
 import ReorderControls from '../components/ReorderControls.vue'
-import CardSequence from '../components/CardSequence2.vue'
+import CardSequence from '../components/CardSequence.vue'
 
 export default {
     name: 'meld-test',

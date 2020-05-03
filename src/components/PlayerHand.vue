@@ -9,7 +9,7 @@
 </template>
 
 <script>
-import CardSequence from './CardSequence2.vue'
+import CardSequence from './CardSequence.vue'
 import { isValidCard } from '../rummy_utils.js'
 
 export default {

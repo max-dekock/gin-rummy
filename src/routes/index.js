@@ -3,7 +3,7 @@ import Router from 'vue-router'
 import TheMenu from '../views/TheMenu.vue'
 import TheMenuNewGame from '../views/TheMenuNewGame.vue'
 import TheMenuJoinGame from '../views/TheMenuJoinGame.vue'
-import GameInterface from '../views/GameInterface2.vue'
+import GameInterface from '../views/GameInterface.vue'
 import MeldTest from '../views/MeldTest.vue'
 
 Vue.use(Router);
