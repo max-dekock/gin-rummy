@@ -55,13 +55,8 @@ nav {
   margin: 30px auto;
 }
 nav ul {
-  list-style-type: none;
-  margin: 0;
   padding: 0;
-}
-nav li {
-  display: inline-block;
-  margin: 0 5px;
+  list-style-type: none;
 }
 nav a:link, nav a:visited {
   color: #34c6eb;

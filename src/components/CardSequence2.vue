@@ -25,14 +25,25 @@ export default {
             type: Array,
             required: true
         },
-        options: {
-            type: Object,
-            default: () => { return {
-                selected: new Set(),
-                selectedColor: "yellow",
-                disabled: new Set(),
-                faceDown: false
-            } }
+        selected: {
+            type: Array,
+            required: false,
+            default: () => [],
+        },
+        disabled: {
+            type: Array,
+            required: false,
+            default: () => [],
+        },
+        selectedColor: {
+            type: String,
+            required: false,
+            default: 'yellow'
+        },
+        faceDown: {
+            type: Boolean,
+            required: false,
+            default: false
         }
     },
     computed: {
@@ -42,14 +53,22 @@ export default {
                 s.push(this.cObj(i));
             }
             return s;
+        },
+        selectedSet() {
+            return new Set(this.selected);
+        },
+        disabledSet() {
+            return new Set(this.disabled);
         }
     },
     methods: {
         onClick(card) {
-            this.$emit('card-clicked', card);
+            if (!this.disabledSet.has(card)) {
+                this.$emit('card-clicked', card);
+            }
         },
         cObj(i) {
-            if (this.options.faceDown) {
+            if (this.faceDown) {
                 return {
                     id: i,
                     card: '',
@@ -62,11 +81,11 @@ export default {
                 let cl = {};
                 let st = {};
                 let pr = {};
-                if (this.options.selected && this.options.selected.has(card)) {
+                if (this.selectedSet.has(card)) {
                     cl.selected = true;
-                    st['outline-color'] = this.options.selectedColor;
+                    st['outline-color'] = this.selectedColor;
                 }
-                if (this.options.disabled && this.options.disabled.has(card)) {
+                if (this.disabledSet.has(card)) {
                     cl.disabled = true;
                 }
                 return {
@@ -84,11 +103,10 @@ export default {
 
 <style scoped>
 .selected {
-  outline: 2px solid yellow;
+  outline: 2px solid;
   outline-offset: 2px;
 }
 .disabled {
-  color: #555555;
   background-color: #bbbbbb;
   border-color: #555555;
 }

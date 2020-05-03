@@ -9,6 +9,26 @@ for (let rank of RANKS) {
 }
 export const DECK = d;
 
+export function isValidCard(card) {
+  if (typeof card != "string") {
+      return false;
+  }
+  if (card.length != 2) {
+      return false;
+  }
+  if (!RANKS.includes(card.charAt(0))) {
+      return false;
+  }
+  if (!SUITS.includes(card.charAt(1))) {
+      return false;
+  }
+  return true;
+}
+
+export function compareCards(card1, card2) {
+  return DECK.indexOf(card1) - DECK.indexOf(card2);
+}
+
 export function getRank(card) {
   return card.charAt(0);
 }

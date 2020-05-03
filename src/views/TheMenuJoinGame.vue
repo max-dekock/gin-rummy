@@ -18,6 +18,11 @@ export default {
         joinGame() {
             this.$socket.client.emit('joinGame', {nickname: this.uname, joinCode: this.joinCode})
         }
+    },
+    mounted() {
+        if (this.$route.query.code) {
+            this.joinCode = this.$route.query.code;
+        }
     }
 }
 </script>
