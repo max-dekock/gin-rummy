@@ -58,11 +58,12 @@ export default new Vuex.Store({
       });
     },
     lay({state}, {melds, layoffs}) {
+      let l = layoffs.map((val, index) => [index, val]).filter(() => true);
       this._vm.$socket.client.emit('lay', {
         gameID: state.gameID,
         playerID: state.playerID,
         melds,
-        layoffs: layoffs.map((val, index) => [index, val]).filter(() => true),
+        layoffs: l,
       });
     }
   },

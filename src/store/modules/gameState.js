@@ -67,6 +67,11 @@ const mutations = {
                 state.deadwood[key] = [];
             }
         }
+        for (let key in state.layoffs) {
+            let lo = [];
+            state.layoffs[key].forEach(v => lo[v[0]] = v[1]);
+            state.layoffs[key] = lo;
+        }
         if (state.finished) {
             state.turn = false;
             state.phase = 'finished';
