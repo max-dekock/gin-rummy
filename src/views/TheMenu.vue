@@ -3,6 +3,9 @@
     <h1>Gin Rummy</h1>
     <nav>
       <ul>
+        <li v-if="gameID">
+          <router-link to="/game">Resume game</router-link>
+        </li>
         <li><router-link to="/create">New game</router-link></li>
         <li><router-link to="/join">Join game</router-link></li>
         <li><router-link to="/meldTest">Meld test</router-link></li>

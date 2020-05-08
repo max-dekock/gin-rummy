@@ -40,3 +40,11 @@ export default {
     }
 }
 </script>
+
+<style scoped>
+#joinUrl {
+    width: 22em;
+    font-size: 16px;
+    border: solid 2px gray;
+}
+</style>
